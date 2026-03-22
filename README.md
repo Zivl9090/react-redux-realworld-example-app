@@ -33,7 +33,30 @@ For convenience, we have a live API server running at https://conduit.production
 
 The source code for the backend server (available for Node, Rails and Django) can be found in the [main RealWorld repo](https://github.com/gothinkster/realworld).
 
-If you want to change the API URL to a local server, simply edit `src/agent.js` and change `API_ROOT` to the local server's URL (i.e. `http://localhost:3000/api`)
+#### Configuring the API URL
+
+The app resolves `API_ROOT` using the following fallback chain:
+
+1. **`window._env_.API_ROOT`** (runtime injection via `public/env-config.js`) — used in container deployments
+2. **`REACT_APP_BACKEND_URL`** (CRA build-time env var) — used for local development
+3. **Hardcoded default** (`https://conduit.productionready.io/api`)
+
+**Local development:**
+
+```bash
+REACT_APP_BACKEND_URL=http://localhost:3000/api npm start
+```
+
+**Container deployments (Docker / OpenShift / Kubernetes):**
+
+Set the `API_ROOT` environment variable on the container. The `docker-entrypoint.sh` script writes it into `env-config.js` at startup, so you can build the image once and promote it through environments without rebuilding:
+
+```bash
+docker build -t conduit-frontend .
+docker run -e API_ROOT=https://api.staging.example.com/api -p 8080:80 conduit-frontend
+```
+
+This follows [12-factor app](https://12factor.net/config) principles: configuration lives in the environment, not in the code.
 
 
 ## Functionality overview
